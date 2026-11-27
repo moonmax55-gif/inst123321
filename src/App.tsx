@@ -20,6 +20,7 @@ import { PostCard } from './components/PostCard';
 import { ProfileModal } from './components/ProfileModal';
 import { TeacherDashboard } from './components/TeacherDashboard';
 import { useAuth } from './contexts/AuthContext';
+import { fetchJson } from './lib/api';
 import { INTERNET_ETHICS_PRINCIPLES } from './shared/ethics';
 import { ClassNotice, ClassUser, FeedPost } from './types';
 
@@ -60,16 +61,17 @@ export default function App() {
     try {
       if (dbUser) {
         const headers = await getAuthHeaders();
-        const res = await fetch('/api/posts', { headers });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || '피드를 불러오지 못했습니다.');
+        const data = await fetchJson<{ posts: FeedPost[]; notices: ClassNotice[]; roster: ClassUser[] }>(
+          '/api/posts',
+          { headers }
+        );
         setPosts(data.posts || []);
         setNotices(data.notices || []);
         setRoster(data.roster || []);
       } else {
-        const res = await fetch('/api/public-feed');
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || '피드를 불러오지 못했습니다.');
+        const data = await fetchJson<{ posts: FeedPost[]; notices: ClassNotice[]; roster: ClassUser[] }>(
+          '/api/public-feed'
+        );
         setPosts(data.posts || []);
         setNotices(data.notices || []);
         setRoster(data.roster || []);
@@ -130,15 +132,12 @@ export default function App() {
   const handleAgreeEthics = async () => {
     if (!dbUser) return;
     const headers = await getAuthHeaders();
-    const res = await fetch('/api/users/me', {
+    const data = await fetchJson<{ user: ClassUser }>('/api/users/me', {
       method: 'PATCH',
       headers,
       body: JSON.stringify({ ethicsAgreed: true }),
     });
-    if (res.ok) {
-      const data = await res.json();
-      setDbUser(data.user);
-    }
+    setDbUser(data.user);
   };
 
   return (

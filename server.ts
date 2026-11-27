@@ -2,7 +2,7 @@ import express from 'express';
 import * as dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { AuthRequest, requireAuth } from './src/middleware/auth.ts';
+import { type AuthRequest, requireAuth } from './src/middleware/auth.ts';
 import {
   addComment,
   createNotice,
@@ -569,12 +569,23 @@ app.delete('/api/notices/:id', requireAuth, async (req: AuthRequest, res) => {
 
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
-    const { createServer: createViteServer } = await import('vite');
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
+    let viteHandler: express.RequestHandler | null = null;
+    const viteReady = (async () => {
+      const { createServer: createViteServer } = await import('vite');
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: 'spa',
+      });
+      viteHandler = vite.middlewares;
+    })();
+
+    app.use(async (req, res, next) => {
+      if (req.path.startsWith('/api/')) return next();
+      if (!viteHandler) {
+        await viteReady;
+      }
+      return viteHandler!(req, res, next);
     });
-    app.use(vite.middlewares);
   } else {
     const distPath = path.resolve(__dirname, 'dist');
     app.use(express.static(distPath));

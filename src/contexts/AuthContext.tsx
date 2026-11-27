@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
+import { fetchJson } from '../lib/api';
 import { auth, googleAuthProvider } from '../lib/firebase';
 import { ClassUser } from '../types';
 
@@ -26,17 +27,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const syncWithBackend = useCallback(async (user: User) => {
     try {
       const token = await user.getIdToken();
-      const res = await fetch('/api/auth/sync', {
+      const data = await fetchJson<{ user: ClassUser }>('/api/auth/sync', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
       });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || '학급 계정을 불러오지 못했습니다.');
-      }
       setDbUser(data.user);
       setAuthError(null);
     } catch (err: unknown) {

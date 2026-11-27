@@ -9,6 +9,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
+import { fetchJson } from '../lib/api';
 import { compressImageToDataUrl } from '../lib/imageUtils';
 import { checkInternetEthics, INTERNET_ETHICS_PRINCIPLES } from '../shared/ethics';
 
@@ -78,7 +79,7 @@ export function CreatePostModal({
     setSubmitting(true);
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch('/api/posts', {
+      await fetchJson('/api/posts', {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -89,10 +90,6 @@ export function CreatePostModal({
           ethicsAgreed,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || '게시글을 올리지 못했습니다.');
-      }
 
       setCaption('');
       setImageUrl(null);

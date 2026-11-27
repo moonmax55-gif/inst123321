@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { KeyRound, X } from 'lucide-react';
+import { fetchJson } from '../lib/api';
 import { ClassUser } from '../types';
 
 interface ProfileModalProps {
@@ -40,7 +41,7 @@ export function ProfileModal({
     try {
       const headers = await getAuthHeaders();
       const parsedNum = studentNumber.trim() ? Number(studentNumber.trim()) : null;
-      const res = await fetch('/api/users/me', {
+      const data = await fetchJson<{ user: ClassUser }>('/api/users/me', {
         method: 'PATCH',
         headers,
         body: JSON.stringify({
@@ -50,8 +51,6 @@ export function ProfileModal({
           avatarColor,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || '프로필 수정에 실패했습니다.');
       onUpdated(data.user);
       onClose();
     } catch (err: unknown) {
@@ -68,13 +67,11 @@ export function ProfileModal({
     setSaving(true);
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch('/api/users/claim-teacher', {
+      const data = await fetchJson<{ user: ClassUser }>('/api/users/claim-teacher', {
         method: 'POST',
         headers,
         body: JSON.stringify({ code: teacherCode.trim() }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || '교사 인증에 실패했습니다.');
       onUpdated(data.user);
       setTeacherCode('');
       setSuccessMsg('선생님 권한이 확인되었습니다!');

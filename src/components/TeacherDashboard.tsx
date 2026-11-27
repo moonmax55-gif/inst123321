@@ -14,6 +14,7 @@ import {
   UserX,
   Users,
 } from 'lucide-react';
+import { fetchJson } from '../lib/api';
 import { ClassNotice, ClassUser, FeedPost, PostReport } from '../types';
 import { Avatar } from './Avatar';
 
@@ -54,11 +55,10 @@ export function TeacherDashboard({
     setLoadingReports(true);
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch('/api/reports', { headers });
-      if (res.ok) {
-        const data = await res.json();
-        setReports(data.reports || []);
-      }
+      const data = await fetchJson<{ reports: PostReport[] }>('/api/reports', { headers });
+      setReports(data.reports || []);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoadingReports(false);
     }

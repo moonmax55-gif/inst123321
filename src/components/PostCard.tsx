@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Trash2,
 } from 'lucide-react';
+import { fetchJson } from '../lib/api';
 import { checkInternetEthics } from '../shared/ethics';
 import { ClassUser, FeedPost } from '../types';
 import { Avatar } from './Avatar';
@@ -104,13 +105,11 @@ export function PostCard({
     setSubmittingComment(true);
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch(`/api/posts/${post.id}/comments`, {
+      await fetchJson(`/api/posts/${post.id}/comments`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ content: commentText.trim() }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || '댓글 등록에 실패했습니다.');
       setCommentText('');
       setShowComments(true);
       await onRefresh();
